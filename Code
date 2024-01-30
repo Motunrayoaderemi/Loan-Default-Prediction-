@@ -1,0 +1,600 @@
+#-----------------Section 01------------------------
+# Set working directory
+setwd(dirname(file.choose()))
+getwd()
+
+# read file
+loan.dat <- read.csv("Loan_Default.csv", stringsAsFactors = FALSE)
+
+#-----------------Section 02-------------------
+# examine the structure of the loan.data data frame
+head(loan.dat)
+summary(loan.dat)
+#Drop column 1 & 2 not needed
+loan.dat <- loan.dat[,-1:-2]
+str(loan.dat)
+
+#Remove variables for undisbursed loan.data
+loan.dat <- loan.dat[,-10:-12]
+
+
+# check for missing data
+library(Amelia)
+library(tidyr)
+apply(loan.dat, MARGIN = 2, FUN = function(x) sum(is.na(x)))
+missmap(loan.dat, col = c("red1", "aquamarine4"), legend = FALSE)
+loan <- na.omit(loan.dat)
+missmap(loan, col = c("red2", "aquamarine4"), legend = FALSE)
+
+
+#-----------------Section 03-------------------
+#-----------------Data Visualizations-------------------
+
+# table of status
+table(loan$Status)
+# Percentage distribution status
+round(prop.table(table(loan$Status)) * 100, digits = 2)
+#Barplot visualization 
+barplot(table(loan$Status), col = c("darkgreen", "red"), legend = TRUE, main="Loan Status Distribution")
+#Simple Pie Chart from Loan Status Proportions
+slices <- c(104092, 20316)
+lbls <- c("Repaid", "Defaulted")
+pct <- round(slices/sum(slices)*100)
+lbls <- paste(lbls, pct) # add percents to labels
+lbls <- paste(lbls,"%",sep="") # ad % to labels 
+pie(slices, labels = lbls,col = c("green4", "red"), main="Pie Chart of Loan Status")
+
+# table of Age by group
+table(loan$age)
+round(prop.table(table(loan$age)) * 100, digits = 2)
+#Barplot visualization 
+barplot(table(loan$age), main="Age Distribution")
+
+#Gender Distriution
+table(loan$Gender)
+# Percentage distribution Gender
+round(prop.table(table(loan$Gender)) * 100, digits = 2)
+#Simple Pie Chart from Gender Proportions
+slices <- c(23562, 34828, 35279, 30739)
+lbls <- c("Female", "Joint", "Male", "Sex Not Available")
+pct <- round(slices/sum(slices)*100)
+lbls <- paste(lbls, pct) # add percents to labels
+lbls <- paste(lbls,"%",sep="") # ad % to labels 
+pie(slices, labels = lbls, col = c("orchid2", "darkviolet", "blue", "red2"), main="Pie Chart of Gender")
+barplot(table(loan$Gender), col = c("orchid2", "darkviolet", "blue", "red2"), main="Bar Plot of Gender")
+
+
+#Pre-Approval Rate
+table(loan$approv_in_adv)
+# Percentage distribution Pre-Approval
+round(prop.table(table(loan$approv_in_adv)) * 100, digits = 2)
+#Simple Pie Chart from Pre-Approval Proportions
+slices1 <- c(103489, 20139, 780)
+lbls <- c("Not Pre-Approved", "Pre-Approved", "Not Stated")
+pct <- round(slices1/sum(slices1)*100)
+lbls <- paste(lbls, pct) # add percents to labels
+lbls <- paste(lbls,"%",sep="") # ad % to labels 
+pie(slices1, labels = lbls,col = c("yellow1", "forestgreen", "black"), main="Pie Chart of Pre-Approval Rate")
+
+#Loan Type
+table(loan$loan_type)
+# Percentage distribution Pre-Approval
+round(prop.table(table(loan$loan_type)) * 100, digits = 2)
+#Simple Pie Chart from Pre-Approval Proportions
+slices2 <- c(101956, 14866, 7586)
+lbls <- c("Not Pre-Approved", "Pre-Approved", "Not Stated")
+pct <- round(slices2/sum(slices2)*100)
+lbls <- paste(lbls, pct) # add percents to labels
+lbls <- paste(lbls,"%",sep="") # ad % to labels 
+pie(slices1, labels = lbls,col = c("goldenrod1", "seagreen1", "brown"), main="Pie Chart of Loan Type")
+
+#Loan Purpose Distriution
+table(loan$loan_purpose)
+# Percentage distribution of loan_purpose
+round(prop.table(table(loan$loan_purpose)) * 100, digits = 2)
+#Barplot visualization 
+barplot(table(loan$loan_purpose), col = c("darkgreen", "red", "blue", "yellow2", "purple2"), legend = TRUE, main="Loan Purpose Distribution")
+
+#Credit Worthiness Distriution
+table(loan$Credit_Worthiness)
+# Percentage distribution loan_purpose
+round(prop.table(table(loan$Credit_Worthiness)) * 100, digits = 2)
+#Barplot visualization 
+pie(table(loan$Credit_Worthiness), col = c( "darkgreen", "purple2"), legend = TRUE, main="Credit Worthiness")
+
+
+#-----Visualizing using Bar Plots of all variables---------------
+table(loan$Status,loan$Region)
+barplot(table(loan$Status,loan$Region),col = c("deepskyblue4", "darkorange"),
+        main="Class Distribution of Regions by Loan Status", legend.text = TRUE)
+
+table(loan$Status,loan$credit_type)
+barplot(table(loan$Status,loan$credit_type),col = c("deepskyblue4", "darkorange"),
+        main="Class Distribution of Credit Type by Loan Status", legend.text = TRUE)
+
+table(loan$Status,loan$total_units)
+barplot(table(loan$Status,loan$total_units),col = c("deepskyblue4", "darkorange"),
+        main="Class Distribution of Loan Units by Loan Status", legend.text = TRUE)
+
+table(loan$Status,loan$interest_only)
+barplot(table(loan$Status,loan$interest_only),col = c("deepskyblue4", "darkorange"),
+        main="Class Distribution of Loans with Interests by  Status", legend.text = TRUE)
+
+table(loan$Status,loan$age)
+barplot(table(loan$Status,loan$age),col = c("deepskyblue4", "darkorange"),
+        main="Age Distribution by  Status", legend.text = TRUE)
+
+library(ggplot2)
+# Line Plot of Age Group by Income
+ggplot(loan, aes(x = income, y = age, color = Credit_Score)) +
+  geom_line() + labs(x = "Income", y = "Age", title = "Line Plot of Age Groups by their Income")
+
+
+#---------------------------Section 04-------------------------
+#-----------------Data Transformation-------------------
+loan$loan_limit <- as.factor(loan$loan_limit)
+loan$approv_in_adv <- as.factor(loan$approv_in_adv)
+loan$loan_purpose <- as.factor(loan$loan_purpose)
+
+#Transform the data frame into  matrix (Except Target Variable that was encoded)
+loan.data <- data.matrix(loan[,-28])
+loan.data <- as.data.frame(loan.data)
+loan.data$Status <- loan$Status
+str(loan.data)
+summary(loan.data)
+
+
+#------------Boxplots for Transformed Data----------
+boxplot(loan.data, col="slategray4", main = "Boxplot of all Variables")
+# Boxplot of the dependent variable
+boxplot(loan.data$dtir1, col="slategray4", main="Boxplot of Loan's DebtToIncome Ratio")
+
+
+# Boxplot of all variables for random visualization
+boxdata <- boxplot(loan.data$income , col="coral4", main = "Boxplot of Income Spread")
+boxdata <- boxplot(loan.data$age, col="coral4", main = "Boxplot for Age")
+boxdata <- boxplot(loan.data$property_value, col="coral4", main = "Boxplot for Property Value")
+boxdata <- boxplot(loan.data$loan_amount, col="coral4", main = "Boxplot for Loan Amount")
+boxdata <- boxplot(loan.data$LTV, col="coral4", main = "Boxplot for Life-Time Value (LTV)")
+boxdata <- boxplot(loan.data$Credit_Score, col="coral4", main = "Boxplot for Credit Score")
+
+
+#---------------------------Section 05-------------------------
+#-----------------Correlation Analysis-------------------
+
+#Check correlations between all variables using Matrix
+library(corrplot)
+loan.data.cor = cor(loan.data)
+loan.data.cor
+#Order by alphabet and arranged in order of correlation
+corrplot(loan.data.cor, method = 'number',  diag=FALSE) 
+
+#check correlations between all independent variables
+library(polycor)
+Loan.cor <- hetcor(loan.data[-29])
+Loan.cor <- round(Loan.cor$correlations, 2)
+#Mixture of number and Bubble chart in alphabetical order
+corrplot.mixed(Loan.cor, order = 'alphabet')
+
+#check correlations between Independent attributes 
+corMatrix <- cor(loan.data [,1:28])
+corrplot(corMatrix, method="color", 
+         # Show the coefficient value
+         addCoef.col="Black", 
+         # "FIRST PRINCIPAL ORDER" is to enable it order OF their correlation
+         order="FPC" , 
+         # Show only the matrix bottom and avoid the diagonal of ones.
+         type="lower", diag=FALSE, 
+         # Cross the values that are not significant
+         sig.level=0.05, main = "Correlation Matrix of Independent Variables")
+
+attach(loan.data)
+#--------Calculate partial correlation------
+library(ppcor)
+pcor.test(Status, Gender, age)
+pcor.test(Status, Credit_Score, Credit_Worthiness)
+pcor.test(Status, property_value, Region)
+pcor.test(Status, dtir1, LTV)
+pcor.test(Status, loan_amount, term)
+pcor.test(Status, Security_Type, approv_in_adv)
+pcor.test(Status, loan_type, loan_purpose)
+
+#Test correlation of dependent variable with all independent variables
+cor.test(Status, Gender)
+cor.test(Status, age)
+cor.test(Status, loan_amount)
+cor.test(Status, term)
+cor.test(Status, Credit_Score)
+cor.test(Status, Credit_Worthiness)
+cor.test(Status, LTV)
+cor.test(Status, credit_type)
+cor.test(Status, dtir1)
+cor.test(Status, property_value)
+cor.test(Status, Region)
+
+detach(loan.data)
+
+#---------------------------Section 06-------------------------
+#-----------------Factor Analysis-------------------
+library(psych)
+# The Kaiser-Meyer-Olkin (KMO) test to measure suitable attributes for my analysis
+KMO(loan.data)
+
+# The Bartlett's test of sphericity from Correlation Analysis
+cortest.bartlett(loan.data.cor)
+
+#------Eigen Value Analysis-------------
+# Determine Number of Factors to Extract
+library(nFactors)
+
+# get eigenvalues: eigen() uses a correlation matrix
+ev <- eigen(cor(loan.data))
+ev$values
+head(ev$values, n = 15)
+zz <- as.data.frame(ev$values)
+yy <- as.data.frame(ev$vectors)
+# plot a scree plot of eigenvalues
+plot(ev$values, type="b", col="blue", xlab="variables", lwd=2, main = "Eigen Value Plot")
+
+
+# calculate cumulative proportion of eigenvalue and plot
+ev.sum<-0
+for(i in 1:length(ev$value)){
+  ev.sum<-ev.sum+ev$value[i]
+}
+ev.list1<-1:length(ev$value)
+for(i in 1:length(ev$value)){
+  ev.list1[i]=ev$value[i]/ev.sum
+}
+ev.list2<-1:length(ev$value)
+ev.list2[1]<-ev.list1[1]
+for(i in 2:length(ev$value)){
+  ev.list2[i]=ev.list2[i-1]+ev.list1[i]
+}
+plot (ev.list2, type="b", col="red", xlab="number of components", ylab ="cumulative proportion", lwd =2,
+      main = "Eigen Value Cumulative Proportion Plot")
+
+
+#-----Principal Components Analysis-------
+# retaining 'nFactors' components
+library(GPArotation)
+library(psych)
+# principal() uses a data frame or matrix of correlations
+pca <- principal(loan.data[-29], nfactors=6, rotate="varimax", method = "maximum likelihood")
+pca
+pca$Structure #Examine important variables by Rotating components
+pca$r.scores  #Create 6 variables (RC1 - RC6) to represent the rotated components
+
+
+
+#---------------------Section 07-----------------------------
+#-----------------Data Mining-------------------
+
+#Create a new data frame from result of factor analysis
+Loan.new<-data.frame(loan.data$construction_type, loan.data$Secured_by, loan.data$loan_amount, loan.data$Gender,
+                     loan.data$Region, loan.data$property_value, loan.data$open_credit, loan.data$LTV,
+                     loan.data$income, loan.data$loan_type, loan.data$interest_only, loan.data$submission_of_application,
+                     loan.data$business_or_commercial, loan.data$occupancy_type, loan.data$total_units, loan.data$Status)
+
+colnames(Loan.new) <- c( "construction_type", "Secured_by", "loan_amount", "Gender", "Region","property_value", 
+                         "open_credit", "LTV", "income", "loan_type", "interest_only", "submission_of_application",
+                         "business_or_commercial", "occupancy_type", "total_units", "Status")
+
+#Check correlations between variables for new dataframe "Loan.df"
+library(corrplot)
+Loan.corr = cor(Loan.new)
+#Mixture of number and Bubble chart in alphabetical order
+corrplot.mixed(Loan.corr)
+
+
+#---------------------------Section 08-------------------------
+#------------Remove Outliers-----------
+library(rstatix)
+library(dplyr)
+#Identify the outliers in Target Variable
+df2 <- identify_outliers(Loan.new, c(property_value))
+
+#define the outliers function using The Interquartile Range (IQR) method  
+get_outliers = function(x){which(x > quantile(x)[4] + 1.5*IQR(x) | x < quantile(x)[2] - 1.5*IQR(x))}
+outliers <- get_outliers(Loan.new$property_value)
+Loan.outlier <-Loan.new[-outliers,]
+
+boxplot(Loan.outlier, col="coral4", main = "Boxplot of Variables after removing Outliers")
+#Rename the dataframe
+LoanML = Loan.outlier
+
+#---------------------Section 09----------------------------
+#------------Standardization/Normalization---------------
+library(DMwR2)
+#-------Normalization Using Soft Max------
+Loan.sm <- as.data.frame(LoanML[c(1:15)])
+# soft max [edit lambda]
+Loan.sm <- apply(Loan.sm, MARGIN = 2, FUN = function(x) (SoftMax(x,lambda = 15, mean(x), sd(x))))
+#--Investigate the result of the normalization
+boxplot (Loan.sm, main = "Soft Max, lambda = 15", col="Bisque2")
+
+#Fit in the dependent variable in the transformed data frame
+Loan.sm <- as.data.frame(Loan.sm)
+Loan.sm$Status<- as.factor(LoanML$Status)
+boxplot(Loan.sm, main = "Soft Max, lambda = 15", col="Bisque")
+describe(Loan.sm)
+
+#Export new data frame to testing and training of all Models.
+write.csv(Loan.sm, "Loan.SM.csv")
+
+
+#--------------------MACHINE LEARNING ALGORITHMS---------------------
+#--------------------CLASSIFICATION---------------------
+# Change categorical variable to factors
+Loan.sm$Status = factor (Loan.sm$Status)
+
+#-------------------------Section 10---------------------------------
+#--------------Training & Testing-------------------
+# Split into train and test (at mother ID = 119255) by 70-30
+library(caret)
+set.seed(12345)
+#Shuffle the data set
+Loan.sm = Loan.sm[sample(nrow(Loan.sm)), ]
+
+#***********Splitting DataSet***************-
+#*Ratio 70/30
+training_set <- Loan.sm[1:83478, ]
+test_set <- Loan.sm[83479:119255, ]
+
+#checking if balanced data set or not using their proportions
+table(training_set$Status) #Training Set
+prop.table(table(training_set$Status))
+
+table(test_set$Status) #Testing Set
+prop.table(table(test_set$Status))
+
+#-----Class Imbalance-----------
+library("ROSE")
+#Under Sampling Technique
+train_dat<- ovun.sample(Status~., data=training_set,
+                        method="under", N=27120, seed=12345)$data
+table(train_dat$Status)
+
+#-----Randomize By Shuffling-----------
+train_dat = train_dat[sample(nrow(train_dat)), ]
+
+
+#-------------------------Section 11---------------------------------
+#--------------ALGORITHM BUILDING--------------
+library(class)
+library(pROC)
+library(ROCR)
+library(caTools)
+library(vip)
+#*********************Logistic Regression****************************
+set.seed(12345)
+# Fitting Logistic Regression to the Training set
+classifier = glm(formula = Status ~ ., family = binomial, data = train_dat)
+summary(classifier)
+
+# Predicting the Test set results
+prob_pred = predict(classifier, type = 'response', newdata = test_set[-16])
+Loan_Logistic = ifelse(prob_pred > 0.5, 1, 0)
+
+# evaluating the models Performances with CrossTabulation & Confusion Matrix
+library(gmodels)
+library(caret)
+CrossTable(x = test_set[,16], y = Loan_Logistic, prop.chisq=FALSE)
+confusionMatrix(as.factor(Loan_Logistic), as.factor(test_set[,16]), mode  ="everything")
+auc(test_set$Status, Loan_Logistic)
+
+
+detach("package:rlang", unload=TRUE)
+install.packages("rlang")
+library(rlang)
+
+
+install.packages("caret", repos = "https://cran.r-project.org")
+install.packages("rlang")
+detach("package:caret", unload=TRUE)
+install.packages("rlang")
+
+library(caret)
+sessionInfo()
+
+
+
+#Plotting ROC Curve for the Models with AUC
+library(pROC)
+LR.Perf <- roc(test_set$Status, Loan_Logistic)
+plot(LR.Perf,plot=TRUE, print.auc=TRUE,
+     col="red", lwd=4, legacy.axes=TRUE,main="Logistic Regression ROC Curve")
+
+# Construct variable importance plot
+vip(classifier, aesthetics = list(colour="brown", fill="darkgreen"), 
+    Main = "Variance of Importance for Variables")
+vi(classifier)
+
+
+#-------------------------Section 12--------------------------------
+#*********************KNN******************************
+sqrt(23122) #Find the Square root of training dataset
+#using K value as 152
+set.seed(12345)
+knn_pred = knn(train = train_dat[, -16], test = test_set[-16], cl = train_dat[, 16],
+                  k = 153)
+#using K value as 23
+knn_pred3 = knn(train = train_dat[, -16], test = test_set[-16], cl = train_dat[, 16], k = 3)
+
+library(gmodels)
+library(caret)
+# evaluating the models Performances with CrossTabulation & Confusion Matrix
+CrossTable(x = test_set[,16], y = knn_pred3, prop.chisq=FALSE)
+confusionMatrix(as.factor(knn_pred3), test_set[,16], mode = "everything")
+auc(test_set$Status, as.numeric(knn_pred3))
+
+CrossTable(x = test_set[,16], y = knn_pred, prop.chisq=FALSE)
+confusionMatrix(as.factor(knn_pred), test_set[,16], mode = "everything")
+auc(test_set$Status, as.numeric(knn_pred))
+
+#Plotting ROC Curve for the Models with AUC
+KNN_Perf <- roc(test_set[,16]~ as.numeric(knn_pred))
+plot(KNN_Perf,plot=TRUE, print.auc=TRUE, col="red", lwd=4, legacy.axes=TRUE,main="ROC Curve of kNN, k=153")
+
+
+
+#-------------------------Section 13---------------------------------
+library(kernlab)
+library(e1071)
+#*********************Support Vector Machine************************
+set.seed(12412345)
+# run initial model "svm0" ( Laplace = Non-Linear kernel)
+svm0 <- ksvm(Status ~ ., data = train_dat, kernel = "laplacedot", type = "C-svc")
+svm0 #Examining the Model's information
+
+# apply the model to make predictions
+svm_pred <- predict(svm0, test_set[-16])
+table(svm_pred, test_set[,16])
+
+# evaluating the models Performances with CrossTabulation & Confusion Matrix
+library(caret)
+library(gmodels)
+CrossTable(x = test_set[,16], y = svm_pred, prop.chisq=FALSE)
+confusionMatrix(svm_pred, test_set[,16], mode = "everything")
+auc(test_set[,16], as.numeric(svm_pred))
+
+#Plotting ROC Curve for the Models with AUC
+library(pROC)
+svm0.roc <- roc(test_set[,16], as.numeric(svm_pred))
+plot(svm0.roc, avg= "threshold", col= "red", print.auc=TRUE,
+     lwd=3, main="SVM ROC curve (LaPlace Kernel)")
+
+
+#--------------# Radial Basis-Gaussian (RBFDot Kernel string)----------------------
+# explore improvements of the model byusing a non-linear kernel function
+set.seed(12345)
+svm1 <- ksvm(Status ~ ., data = train_dat, kernel = "rbfdot", type = "C-svc")
+svm1 # look at basic information about the model
+
+# apply the model to make predictions
+svm_pred1 <- predict(svm1, test_set[-16])
+table(svm_pred1, test_set[,16])
+
+# evaluating the models Performances with CrossTabulation & Confusion Matrix
+library(caret)
+library(gmodels)
+CrossTable(x = test_set[,16], y = svm_pred1, prop.chisq=FALSE)
+confusionMatrix(svm_pred1, test_set[,16], mode = "everything")
+auc(test_set[,16], as.numeric(svm_pred1))
+
+install.packages('caret', dependencies = TRUE)
+
+#Plotting ROC Curve for the Models with AUC
+library(pROC)
+svm1.roc <- roc(test_set[,16], as.numeric(svm_pred1))
+plot(svm1.roc, avg= "threshold", col= "red", print.auc=TRUE,lwd=3, main="SVM~2 ROC curve (RBFDot)")
+
+
+
+#-------------------------Section 14--------------------------------
+library(C50)
+library(rpart)
+library(rpart.plot)
+#*********************Decision Tree************************
+set.seed(12345)
+#Fitting the Decision Tree for the Training set
+fit <- rpart(Status~., data = train_dat, method = 'class')
+rpart.plot(fit, box.palette="RdBu", shadow.col="gray", nn=TRUE, 
+           main="Decision Tree Schematic of Trained Model")
+
+#identify best cp used by the model
+fit
+best <- fit$cptable[which.min(fit$cptable[,"xerror"]),"CP"]
+best # CP = Complexity Parameter of the tree
+
+# build the simplest decision tree
+Loan.DT <- C5.0(train_dat[-16], train_dat[,16])
+Loan.DT # display simple facts about the tree
+summary(Loan.DT) # display detailed information about the tree
+plot(Loan.DT)
+
+# apply the model to make predictions
+DT_pred <- predict(Loan.DT, test_set)
+
+# evaluating the models Performances with CrossTabulation & Confusion Matrix
+library(gmodels)
+library(caret)
+CrossTable(test_set[,16], DT_pred, prop.chisq = FALSE, prop.c = FALSE)
+confusionMatrix(DT_pred, test_set[,16], mode = "everything")
+auc(test_set$Status, as.numeric(DT_pred))
+
+# Construct variable importance plot
+vip(Loan.DT, aesthetics = list(colour="brown", fill="darkgreen"), 
+    Main = "Variance of Importance for Variables")
+vi(Loan.DT)
+
+# improving model performance BY pruning the tree to simplify and/or avoid over-fitting
+set.seed(12345)
+DT.prune <- C5.0(train_dat[-16], train_dat$Status,
+                    control = C5.0Control(minCases = 19))
+DT.prune
+summary(DT.prune)
+plot(DT.prune)
+# apply the model to make predictions
+DTprune.pred <- predict(DT.prune, test_set)
+
+# evaluating the models Performances with CrossTabulation & Confusion Matrix
+CrossTable(test_set[,16], DTprune.pred,prop.chisq = FALSE, prop.c = FALSE)
+confusionMatrix(DTprune.pred, test_set[,16], mode = "everything")
+auc(test_set$Status, as.numeric(DTprune.pred))
+
+#Plotting ROC Curve for the Models with AUC
+library(pROC)
+library(ROCR)
+DT_Perf <- roc(test_set[,16]~ as.numeric(DTprune.pred))
+plot(DT_Perf,plot=TRUE, print.auc=TRUE, col="red", lwd=4, legacy.axes=TRUE,
+     main="ROC Curve of Decision Tree (Pruned Tree)")
+
+# Construct variable importance plot
+vip(DT.prune, aesthetics = list(colour="brown", fill="darkgreen"), 
+    Main = "Variance of Importance for Variables")
+vi(DT.prune)
+
+
+#-------------------------Section 15--------------------------------
+library(NeuralNetTools)
+library(nnet)
+#*********************Artificial Neural Network (ANN)************************
+set.seed(12345)
+# create ann model
+Loan.ANN <-nnet(Status ~ .,data = train_dat, size=5, decay=5e-4, maxit=100)
+plotnet(Loan.ANN)
+summary(Loan.ANN) #Summary of the model
+
+#Fitting the model to make prediction
+ann.pred1 <- predict(Loan.ANN, test_set)
+ANN.prediction <- as.numeric(ann.pred1 > 0.5)
+
+# evaluating the models Performances with CrossTabulation & Confusion Matrix
+library(gmodels)
+library(caret)
+CrossTable(test_set[,16], ANN.prediction)
+confusionMatrix(as.factor(ANN.prediction), test_set[,16], mode = "everything")
+auc(test_set$Status, as.numeric(ANN.prediction))
+
+#Plotting ROC Curve for the Model with AUC
+library(pROC)
+library(ROCR)
+ANN_Perf <- roc(test_set[,16]~ as.numeric(ANN.prediction))
+plot(ANN_Perf,plot=TRUE, print.auc=TRUE,
+     col="red", lwd=4, legacy.axes=TRUE,main="ROC Curve of Artificial Neural Network (ANN)")
+
+# Construct variable importance plot
+vip(Loan.ANN, aesthetics = list(colour="brown", fill="darkgreen"), 
+    Main = "Variance of Importance for Variables")
+vi(Loan.ANN)
+
+
+#-------------------------Section 19--------------------------------
+# remove all variables from the environment
+rm(list=ls())
+
+#-------------------------Section 20--------------------------------
+#Close R-Studio
+q()
+Y
